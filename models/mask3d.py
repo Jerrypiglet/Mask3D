@@ -69,6 +69,7 @@ class Mask3D(nn.Module):
         self.pos_enc_type = positional_encoding_type
 
         self.backbone = hydra.utils.instantiate(config.backbone)
+        # self.backbone = config.backbone
         self.num_levels = len(self.hlevels)
         sizes = self.backbone.PLANES[-5:]
 

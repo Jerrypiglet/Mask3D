@@ -3,6 +3,7 @@ import os
 from hashlib import md5
 from uuid import uuid4
 import hydra
+import numpy as np
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from trainer.trainer import InstanceSegmentation, RegularCheckpointing
@@ -28,18 +29,18 @@ def get_parameters(cfg: DictConfig):
         cfg.general.gpus = os.environ.get("CUDA_VISIBLE_DEVICES", None)
     loggers = []
 
-    # cfg.general.experiment_id = "0" # str(Repo("./").commit())[:8]
-    # params = flatten_dict(OmegaConf.to_container(cfg, resolve=True))
+    cfg.general.experiment_id = "0" # str(Repo("./").commit())[:8]
+    params = flatten_dict(OmegaConf.to_container(cfg, resolve=True))
 
     # create unique id for experiments that are run locally
-    # unique_id = "_" + str(uuid4())[:4]
-    # cfg.general.version = md5(str(params).encode("utf-8")).hexdigest()[:8] + unique_id
+    unique_id = "_" + str(uuid4())[:4]
+    cfg.general.version = md5(str(params).encode("utf-8")).hexdigest()[:8] + unique_id
 
     if not os.path.exists(cfg.general.save_dir):
         os.makedirs(cfg.general.save_dir)
     else:
         print("EXPERIMENT ALREADY EXIST")
-        cfg["trainer"][
+        cfg["general"][
             "resume_from_checkpoint"
         ] = f"{cfg.general.save_dir}/last-epoch.ckpt"
 
@@ -74,14 +75,31 @@ def train(cfg: DictConfig):
 
     callbacks.append(RegularCheckpointing())
 
+    # runner = Trainer(
+    #     logger=loggers,
+    #     gpus=cfg.general.gpus,
+    #     callbacks=callbacks,
+    #     weights_save_path=str(cfg.general.save_dir),
+    #     **cfg.trainer,
+    # )
+    
+    '''
+    trying to be compatible with torch 2.x and pytorch_lightning 2.x
+    https://lightning.ai/docs/pytorch/stable/upgrade/from_1_7.html
+    '''
+    
     runner = Trainer(
         logger=loggers,
-        gpus=cfg.general.gpus,
+        # gpus=cfg.general.gpus,
+        accelerator='gpu', devices=np.arange(cfg.general.gpus).tolist(), 
         callbacks=callbacks,
-        weights_save_path=str(cfg.general.save_dir),
+        # weights_save_path=str(cfg.general.save_dir),
         **cfg.trainer,
     )
-    runner.fit(model)
+    runner.fit(
+        model, 
+        ckpt_path=cfg.general.resume_from_checkpoint,
+        )
 
 
 @hydra.main(
@@ -92,12 +110,16 @@ def test(cfg: DictConfig):
     os.chdir(hydra.utils.get_original_cwd())
     cfg, model, loggers = get_parameters(cfg)
     runner = Trainer(
-        gpus=cfg.general.gpus,
+        # gpus=cfg.general.gpus,
+        accelerator='gpu', devices=np.arange(cfg.general.gpus).tolist(), 
         logger=loggers,
-        weights_save_path=str(cfg.general.save_dir),
+        # weights_save_path=str(cfg.general.save_dir),
         **cfg.trainer,
     )
-    runner.test(model)
+    runner.test(
+        model, 
+        ckpt_path=cfg.general.resume_from_checkpoint,
+        )
 
 
 @hydra.main(

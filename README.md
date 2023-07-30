@@ -58,11 +58,55 @@ We adapt the codebase of [Mix3D](https://github.com/kumuji/mix3d) which provides
 └── saved                             <- folder that stores models and logs
 ```
 
+### [Rui] Dependencies for cuda 11.8/Ubuntu 22.04/sm_89 :memo:
+
+The main dependencies of the project are the following:
+
+```yaml
+python: 3.10.9
+cuda: 11.8
+GPU: 4090 (sm_89)
+```
+
+You can set up a conda environment as follows
+
+``` bash
+export TORCH_CUDA_ARCH_LIST="8.9"
+export PATH="/usr/local/cuda-11.8/bin:$PATH"
+export LD_LIBRARY_PATH="/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH"
+export CUDA_HOME="/usr/local/cuda-11.8"
+
+conda env create -f environment_mm3_cuda118.yaml
+conda activate mask3d_cuda113
+pip install --upgrade pip
+pip install -r requirements_mm3.txt
+
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# === COMPILE TORCH 1.13.1 FROM SOURCE
+# conda install pytorch-scatter -c pyg
+pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.1%2Bcu118.html
+# python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+pip install pytorch-lightning=2.0.6
+
+pip3 install 'git+https://github.com/facebookresearch/detectron2.git@710e7795d0eeadf9def0e7ef957eea13532e34cf' --no-deps
+
+
+mkdir third_party
+cd third_party
+
+git clone --recursive "https://github.com/NVIDIA/MinkowskiEngine"
+cd MinkowskiEngine
+git checkout 02fc608bea4c0549b0a7b00ca1bf15dee4a0b228
+python setup.py install --force_cuda --blas=openblas
+
+
+```
+
 ### Dependencies :memo:
 The main dependencies of the project are the following:
 ```yaml
 python: 3.10.9
-cuda: 11.3
+cuda: 11.3 -> 12.1
 ```
 You can set up a conda environment as follows
 ```
@@ -116,6 +160,15 @@ python -m datasets.preprocessing.scannet_preprocessing preprocess \
 --scannet200=false/true
 ```
 
+**[Rui]**
+``` bash
+(py310mask3d_cuda118) ruizhu@ruizhu-Alienware-Aurora-R15:~/Documents/Projects/Mask3D$ 
+
+python -m datasets.preprocessing.scannet_preprocessing preprocess --data_dir="/newfoundland/ScanNet" --save_dir="data/processed/scannet" --git_repo="third_party/ScanNet" --scannet200=false
+
+python -m datasets.preprocessing.scannet_preprocessing compute_color_mean_std --data_dir="/newfoundland/ScanNet" --save_dir="data/processed/scannet" --git_repo="third_party/ScanNet" --scannet200=false
+```
+
 #### S3DIS
 The S3DIS dataset contains some smalls bugs which we initially fixed manually. We will soon release a preprocessing script which directly preprocesses the original dataset. For the time being, please follow the instructions [here](https://github.com/JonasSchult/Mask3D/issues/8#issuecomment-1279535948) to fix the dataset manually. Afterwards, call the preprocessing script as follows:
 
@@ -133,16 +186,24 @@ python -m datasets.preprocessing.stpls3d_preprocessing preprocess \
 ```
 
 ### Training and testing :train2:
+
 Train Mask3D on the ScanNet dataset:
+
 ```bash
 python main_instance_segmentation.py
 ```
+
 Please refer to the [config scripts](https://github.com/JonasSchult/Mask3D/tree/main/scripts) (for example [here](https://github.com/JonasSchult/Mask3D/blob/main/scripts/scannet/scannet_val.sh#L15)) for detailed instructions how to reproduce our results.
 In the simplest case the inference command looks as follows:
 ```bash
 python main_instance_segmentation.py \
 general.checkpoint='PATH_TO_CHECKPOINT.ckpt' \
 general.train_mode=false
+```
+
+**[Rui]**
+``` bash
+(py310mask3d_cuda118) ruizhu@ruizhu-Alienware-Aurora-R15:~/Documents/Projects/Mask3D$ HYDRA_FULL_ERROR=1 python main_instance_segmentation.py data.voxel_size=0.025 data.batch_size=4 general.experiment_name="SCANNET_TRAIN"
 ```
 
 ## Trained checkpoints :floppy_disk:

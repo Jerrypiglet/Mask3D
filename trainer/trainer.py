@@ -112,6 +112,10 @@ class InstanceSegmentation(pl.LightningModule):
         self.iou = IoU()
         # misc
         self.labels_info = dict()
+        
+        # in-memory cache
+        self.val_output_list = []
+        self.train_output_list = []
 
     def forward(
         self, x, point2segment=None, raw_coordinates=None, is_eval=False
@@ -201,10 +205,53 @@ class InstanceSegmentation(pl.LightningModule):
         )
 
         self.log_dict(logs)
-        return sum(losses.values())
+        # return sum(losses.values())
+        results = sum(losses.values())
+        self.train_output_list.append(results.detach().cpu().item())
 
     def validation_step(self, batch, batch_idx):
-        return self.eval_step(batch, batch_idx)
+        # return self.eval_step(batch, batch_idx)
+        results = self.eval_step(batch, batch_idx)
+        self.val_output_list.append(results)
+
+    def training_epoch_start(self) -> None:
+        super().training_epoch_start()
+        self.train_output_list = []
+        return
+
+    def on_validation_epoch_start(self) -> None:
+        super().on_validation_epoch_start()
+        self.val_output_list = []
+        return
+    
+    def on_training_epoch_end(self):
+        '''
+        NotImplementedError: Support for `training_epoch_end` has been removed in v2.0.0.:
+            https://github.com/Lightning-AI/lightning/pull/16520
+        '''
+        # train_loss = sum([out["loss"].cpu().item() for out in self.train_output_list]) / len(
+        #     self.train_output_list
+        # )
+        train_loss = sum([out for out in self.train_output_list]) / len(
+            self.train_output_list
+        )
+        results = {"train_loss_mean": train_loss}
+        self.log_dict(results)
+
+    def on_validation_epoch_end(self):
+        self.test_epoch_end(self.val_output_list)
+
+
+    # def training_epoch_end(self, outputs):
+    #     train_loss = sum([out["loss"].cpu().item() for out in outputs]) / len(
+    #         outputs
+    #     )
+    #     results = {"train_loss_mean": train_loss}
+    #     self.log_dict(results)
+
+    # def validation_epoch_end(self, outputs):
+    #     self.test_epoch_end(outputs)
+
 
     def export(self, pred_masks, scores, pred_classes, file_names, decoder_id):
         root_path = f"eval_output"
@@ -232,16 +279,6 @@ class InstanceSegmentation(pl.LightningModule):
                     fout.write(
                         f"pred_mask/{file_name}_{real_id}.txt {pred_class} {score}\n"
                     )
-
-    def training_epoch_end(self, outputs):
-        train_loss = sum([out["loss"].cpu().item() for out in outputs]) / len(
-            outputs
-        )
-        results = {"train_loss_mean": train_loss}
-        self.log_dict(results)
-
-    def validation_epoch_end(self, outputs):
-        self.test_epoch_end(outputs)
 
     def save_visualizations(
         self,

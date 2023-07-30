@@ -28,7 +28,8 @@ class ScannetPreprocessing(BasePreprocessing):
     ):
         super().__init__(data_dir, save_dir, modes, n_jobs)
 
-        self.scannet200 = scannet200
+        assert scannet200 in ['false', 'False', 'true', 'True']
+        self.scannet200 = scannet200 in ['true', 'True']
 
         if self.scannet200:
             self.labels_pd = pd.read_csv(
@@ -39,7 +40,9 @@ class ScannetPreprocessing(BasePreprocessing):
 
         git_repo = Path(git_repo)
         self.create_label_database(git_repo)
+
         for mode in self.modes:
+            # if mode in ['train', 'validation']: continue
             trainval_split_dir = git_repo / "Tasks" / "Benchmark"
             scannet_special_mode = "val" if mode == "validation" else mode
             with open(
@@ -58,8 +61,11 @@ class ScannetPreprocessing(BasePreprocessing):
                     / (scene + "_vh_clean_2.ply")
                 )
             self.files[mode] = natsorted(filepaths)
+            
+        # self.compute_color_mean_std()
 
     def create_label_database(self, git_repo):
+        
         if self.scannet200:
             label_database = {}
             for row_id, class_id in enumerate(VALID_CLASS_IDS_200):
@@ -87,7 +93,8 @@ class ScannetPreprocessing(BasePreprocessing):
                 .rename(columns={"nyu40class": "name"})
                 .replace(" ", "_", regex=True)
             )
-            df = pd.DataFrame([{"name": "empty"}]).append(df)
+            # df = pd.DataFrame([{"name": "empty"}]).append(df)
+            df = pd.concat([df, pd.DataFrame([{"name": "empty"}])], ignore_index=True)
             df["validation"] = False
 
             with open(

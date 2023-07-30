@@ -719,6 +719,7 @@ class SemanticSegmentationDataset(Dataset):
                     valid_labels.update({k: v})
             return valid_labels
         else:
+            import ipdb; ipdb.set_trace()
             msg = f"""not available number labels, select from:
             {number_of_validation_labels}, {number_of_all_labels}"""
             raise ValueError(msg)
