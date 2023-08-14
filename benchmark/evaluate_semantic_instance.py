@@ -468,7 +468,7 @@ def evaluate(
     
     if dataset == 'openrooms_public':
         VALID_CLASS_IDS = np.array(
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
         )
         from datasets.openrooms_public_constants import CLASS_LABELS_OR
         CLASS_LABELS = CLASS_LABELS_OR
@@ -478,7 +478,7 @@ def evaluate(
         for i in range(len(VALID_CLASS_IDS)):
             LABEL_TO_ID[CLASS_LABELS[i]] = VALID_CLASS_IDS[i]
             ID_TO_LABEL[VALID_CLASS_IDS[i]] = CLASS_LABELS[i]
-
+            
     if dataset == "stpls3d":
         # global CLASS_LABELS
         # global VALID_CLASS_IDS

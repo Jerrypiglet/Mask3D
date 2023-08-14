@@ -243,6 +243,7 @@ class InstanceSegmentation(pl.LightningModule):
 
     def on_validation_epoch_end(self):
         self.test_epoch_end(self.val_output_list)
+        self.val_output_list.clear() # clear memory
 
 
     # def training_epoch_end(self, outputs):
@@ -318,7 +319,7 @@ class InstanceSegmentation(pl.LightningModule):
             for instance_counter, (label, mask) in enumerate(
                 zip(target_full["labels"], target_full["masks"])
             ):
-                if label in [39, 40, 41]:
+                if label in [40, 41, 42]:
                     import ipdb; ipdb.set_trace()
                 if label == 255:  # [TODO-rui] okay fix this...
                     continue
@@ -484,6 +485,7 @@ class InstanceSegmentation(pl.LightningModule):
         )
 
     def eval_step(self, batch, batch_idx):
+        print('=== eval_step', batch_idx)
         data, target, file_names = batch
         inverse_maps = data.inverse_maps
         target_full = data.target_full
@@ -1039,11 +1041,11 @@ class InstanceSegmentation(pl.LightningModule):
         box_ap_25 = eval_det(
             self.bbox_preds, self.bbox_gt, ovthresh=0.25, use_07_metric=False
         )
-        mean_box_ap_25 = sum([v for k, v in box_ap_25[-1].items()]) / len(
-            box_ap_25[-1].keys()
+        mean_box_ap_25 = sum([v for k, v in box_ap_25[-1].items()]) / (len(
+            box_ap_25[-1].keys()) + 1e-6
         )
-        mean_box_ap_50 = sum([v for k, v in box_ap_50[-1].items()]) / len(
-            box_ap_50[-1].keys()
+        mean_box_ap_50 = sum([v for k, v in box_ap_50[-1].items()]) / (len(
+            box_ap_50[-1].keys()) + 1e-6
         )
 
         ap_results[f"{log_prefix}_mean_box_ap_25"] = mean_box_ap_25

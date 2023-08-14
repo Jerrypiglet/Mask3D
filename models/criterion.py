@@ -161,9 +161,11 @@ class SetCriterion(nn.Module):
         )
         target_classes[idx] = target_classes_o
 
+        assert torch.max(target_classes!=255) <= 38 # [TODO-rui] for debugging; remove later
+        
         loss_ce = F.cross_entropy(
-            src_logits.transpose(1, 2), # (B, 100, general.num_targets)
-            target_classes, # (B, 100
+            src_logits.transpose(1, 2), # (B, 100, general.num_targets (including ignored class))
+            target_classes, # (B, 100)
             self.empty_weight,
             ignore_index=self.ignore_index, # [TODO-rui] this looks very specious (hardcoded?)
         )

@@ -16,14 +16,15 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
     def __init__(
         self,
         data_dir: str = "/data/Mask3D_data/openrooms_public_dump",
-        save_dir: str = "./data/processed/openrooms_public",
-        # modes: tuple = ("train", "validation"),
-        modes: tuple = ("validation"),
+        save_dir: str = "./data/processed/openrooms_public_trainval",
+        modes: tuple = ("train", "validation"),
+        # modes: tuple = ("validation"),
         n_jobs: int = -1,
         rui_indoorinv_data_repo_path: str = "/home/ruizhu/Documents/Projects/rui-indoorinv-data",
     ):
         if isinstance(modes, str):
             modes = (modes,)
+        import ipdb; ipdb.set_trace()
         super().__init__(data_dir, save_dir, modes, n_jobs)
 
         rui_indoorinv_data_repo_path = Path(rui_indoorinv_data_repo_path)
@@ -43,7 +44,7 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
                 with open(str(excluded_scenes_file), 'r') as f:
                     excluded_scenes = f.read().splitlines()
                 excluded_scenes = [(scene.split(' ')[0].replace('DiffMat', '').replace('DiffLight', ''), scene.split(' ')[1]) for scene in excluded_scenes]
-                scene_list = [scene for scene in scene_list if (scene[0].replace('DiffMat', '').replace('DiffLight', ''), scene[1]) not in openrooms_semantics_black_list]
+                scene_list = [scene for scene in scene_list if (scene[0].replace('DiffMat', '').replace('DiffLight', ''), scene[1]) not in excluded_scenes]
                 print('[%s] after removing known invalid scenes [from %s] -> %d scenes'%(split, excluded_scenes_file.name, len(scene_list)))
             
             # scene_list_dict[split] = scene_list
