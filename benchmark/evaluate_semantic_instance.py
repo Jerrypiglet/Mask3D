@@ -466,7 +466,7 @@ def evaluate(
     global LABEL_TO_ID
     global opt
     
-    if dataset == 'openrooms_public':
+    if 'openrooms_public' in dataset:
         VALID_CLASS_IDS = np.array(
             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
         )
@@ -971,7 +971,6 @@ def evaluate(
 
     print("evaluating", len(preds), "scans...")
     matches = {}
-    # import ipdb; ipdb.set_trace()
     for i, (k, v) in enumerate(preds.items()):
         gt_file = os.path.join(gt_path, k + ".txt")
         if not os.path.isfile(gt_file):

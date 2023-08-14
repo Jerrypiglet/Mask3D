@@ -319,6 +319,7 @@ class InstanceSegmentation(pl.LightningModule):
             for instance_counter, (label, mask) in enumerate(
                 zip(target_full["labels"], target_full["masks"])
             ):
+                # print(instance_counter, label, mask.shape)
                 if label in [40, 41, 42]:
                     import ipdb; ipdb.set_trace()
                 if label == 255:  # [TODO-rui] okay fix this...
@@ -363,6 +364,8 @@ class InstanceSegmentation(pl.LightningModule):
                     original_normals[mask_tmp.astype(bool), :]
                 )
 
+            if gt_pcd_pos == []:
+                return
             gt_pcd_pos = np.concatenate(gt_pcd_pos)
             gt_pcd_normals = np.concatenate(gt_pcd_normals)
             gt_pcd_color = np.concatenate(gt_pcd_color)
@@ -1070,7 +1073,8 @@ class InstanceSegmentation(pl.LightningModule):
             "scannet",
             "stpls3d",
             "scannet200",
-            "openrooms_public"
+            "openrooms_public", 
+            "openrooms_public_trainval"
         ]:
             gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/{self.validation_dataset.mode}"
         else:

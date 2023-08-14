@@ -24,11 +24,12 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
     ):
         if isinstance(modes, str):
             modes = (modes,)
-        import ipdb; ipdb.set_trace()
         super().__init__(data_dir, save_dir, modes, n_jobs)
 
         rui_indoorinv_data_repo_path = Path(rui_indoorinv_data_repo_path)
         self.create_label_database(rui_indoorinv_data_repo_path)
+        
+        self.save_dir = save_dir
         
         for mode in self.modes:
             
@@ -221,7 +222,7 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
 
     def compute_color_mean_std(
         self,
-        train_database_path: str = "./data/processed/openrooms_public/train_database.yaml",
+        train_database_path: str = "./data/processed/openrooms_public_trainval/train_database.yaml",
     ):
         train_database = self._load_yaml(train_database_path)
         color_mean, color_std = [], []

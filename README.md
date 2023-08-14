@@ -76,6 +76,8 @@ export PATH="/usr/local/cuda-11.8/bin:$PATH"
 export LD_LIBRARY_PATH="/usr/local/cuda-11.8/lib64:$LD_LIBRARY_PATH"
 export CUDA_HOME="/usr/local/cuda-11.8"
 
+# if missing g++: conda install -c conda-forge cxx-compiler
+
 conda env create -f environment_mm3_cuda118.yaml
 conda activate mask3d_cuda113
 pip install --upgrade pip
@@ -86,7 +88,7 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 # conda install pytorch-scatter -c pyg
 pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.1%2Bcu118.html
 # python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
-pip install pytorch-lightning=2.0.6
+pip install pytorch-lightning==2.0.6
 
 pip3 install 'git+https://github.com/facebookresearch/detectron2.git@710e7795d0eeadf9def0e7ef957eea13532e34cf' --no-deps
 
@@ -97,7 +99,7 @@ cd third_party
 git clone --recursive "https://github.com/NVIDIA/MinkowskiEngine"
 cd MinkowskiEngine
 git checkout 02fc608bea4c0549b0a7b00ca1bf15dee4a0b228
-python setup.py install --force_cuda --blas=openblas
+python setup.py install --force_cuda --blas=openblas # OR: https://github.com/NVIDIA/MinkowskiEngine#anaconda
 
 
 ```

@@ -95,7 +95,7 @@ class SemanticSegmentationDataset(Dataset):
         if self.dataset_name == "scannet":
             self.color_map = SCANNET_COLOR_MAP_20
             self.color_map[255] = (255, 255, 255)
-        elif self.dataset_name == "openrooms_public":
+        elif "openrooms_public" in self.dataset_name:
             self.color_map = CLASS_COLOR_MAP_OR
             self.color_map[255] = (255, 255, 255)  # [TODO-rui] change this according to ignore_id
         elif self.dataset_name == "stpls3d":
@@ -674,7 +674,7 @@ class SemanticSegmentationDataset(Dataset):
                 raw_coordinates,
                 idx,
             )
-        elif self.dataset_name == "openrooms_public":
+        elif "openrooms_public" in self.dataset_name:
             return (
                 coordinates,
                 features,
