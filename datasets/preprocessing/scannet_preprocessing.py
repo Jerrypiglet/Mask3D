@@ -65,6 +65,10 @@ class ScannetPreprocessing(BasePreprocessing):
         # self.compute_color_mean_std()
 
     def create_label_database(self, git_repo):
+        '''
+        [TODO] there is a bug... the label names in label_database.yaml are shifted by 1. should be: 0: unlabelled, 1: wall, 2: floor, etc.
+        '''
+        assert False, 'fix the bug above first'
         
         if self.scannet200:
             label_database = {}

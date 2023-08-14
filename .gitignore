@@ -5,11 +5,12 @@
 third_party/MinkowskiEngine
 third_party/ScanNet
 *.out
+notebooks/_tmp*
 
 .vscode/
 
 
-
+scene00_*.ply
 
 
 # Byte-compiled / optimized / DLL files

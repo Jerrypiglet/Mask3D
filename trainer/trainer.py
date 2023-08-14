@@ -205,14 +205,17 @@ class InstanceSegmentation(pl.LightningModule):
         )
 
         self.log_dict(logs)
-        # return sum(losses.values())
         results = sum(losses.values())
+        
         self.train_output_list.append(results.detach().cpu().item())
+        
+        return results
 
     def validation_step(self, batch, batch_idx):
-        # return self.eval_step(batch, batch_idx)
         results = self.eval_step(batch, batch_idx)
         self.val_output_list.append(results)
+        
+        return results
 
     def training_epoch_start(self) -> None:
         super().training_epoch_start()
@@ -315,7 +318,9 @@ class InstanceSegmentation(pl.LightningModule):
             for instance_counter, (label, mask) in enumerate(
                 zip(target_full["labels"], target_full["masks"])
             ):
-                if label == 255:
+                if label in [39, 40, 41]:
+                    import ipdb; ipdb.set_trace()
+                if label == 255:  # [TODO-rui] okay fix this...
                     continue
 
                 mask_tmp = mask.detach().cpu().numpy()
@@ -1063,6 +1068,7 @@ class InstanceSegmentation(pl.LightningModule):
             "scannet",
             "stpls3d",
             "scannet200",
+            "openrooms_public"
         ]:
             gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/{self.validation_dataset.mode}"
         else:

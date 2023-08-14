@@ -24,6 +24,9 @@ from datasets.scannet200.scannet200_constants import (
     SCANNET_COLOR_MAP_200,
     SCANNET_COLOR_MAP_20,
 )
+from datasets.openrooms_public_constants import (
+    CLASS_COLOR_MAP_OR,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,10 +91,13 @@ class SemanticSegmentationDataset(Dataset):
         self.dataset_name = dataset_name
         self.is_elastic_distortion = is_elastic_distortion
         self.color_drop = color_drop
-
+        
         if self.dataset_name == "scannet":
             self.color_map = SCANNET_COLOR_MAP_20
             self.color_map[255] = (255, 255, 255)
+        elif self.dataset_name == "openrooms_public":
+            self.color_map = CLASS_COLOR_MAP_OR
+            self.color_map[255] = (255, 255, 255)  # [TODO-rui] change this according to ignore_id
         elif self.dataset_name == "stpls3d":
             self.color_map = {
                 0: [0, 255, 0],  # Ground
@@ -166,6 +172,7 @@ class SemanticSegmentationDataset(Dataset):
             )
         if type(data_dir) == str:
             self.data_dir = [self.data_dir]
+            
         self.ignore_label = ignore_label
         self.add_colors = add_colors
         self.add_normals = add_normals
@@ -640,7 +647,7 @@ class SemanticSegmentationDataset(Dataset):
             "scene0154_00",
         ]:
             return self.__getitem__(0)
-
+        
         if self.dataset_name == "s3dis":
             return (
                 coordinates,
@@ -662,6 +669,17 @@ class SemanticSegmentationDataset(Dataset):
                 features,
                 labels,
                 self.data[idx]["scene"],
+                raw_color,
+                raw_normals,
+                raw_coordinates,
+                idx,
+            )
+        elif self.dataset_name == "openrooms_public":
+            return (
+                coordinates,
+                features,
+                labels,
+                '-'.join(self.data[idx]["raw_filepath"].split("/")[-3:-1]),
                 raw_color,
                 raw_normals,
                 raw_coordinates,
@@ -719,7 +737,7 @@ class SemanticSegmentationDataset(Dataset):
                     valid_labels.update({k: v})
             return valid_labels
         else:
-            import ipdb; ipdb.set_trace()
+            print(num_labels, number_of_validation_labels, number_of_all_labels)
             msg = f"""not available number labels, select from:
             {number_of_validation_labels}, {number_of_all_labels}"""
             raise ValueError(msg)

@@ -108,6 +108,7 @@ class SetCriterion(nn.Module):
         oversample_ratio,
         importance_sample_ratio,
         class_weights,
+        ignore_index=255, 
     ):
         """Create the criterion.
         Parameters:
@@ -126,6 +127,7 @@ class SetCriterion(nn.Module):
         self.losses = losses
         empty_weight = torch.ones(self.num_classes + 1)
         empty_weight[-1] = self.eos_coef
+        self.ignore_index = ignore_index
 
         if self.class_weights != -1:
             assert (
@@ -145,7 +147,7 @@ class SetCriterion(nn.Module):
         targets dicts must contain the key "labels" containing a tensor of dim [nb_target_boxes]
         """
         assert "pred_logits" in outputs
-        src_logits = outputs["pred_logits"].float()
+        src_logits = outputs["pred_logits"].float() # (B, 100, general.num_targets)
 
         idx = self._get_src_permutation_idx(indices)
         target_classes_o = torch.cat(
@@ -160,11 +162,12 @@ class SetCriterion(nn.Module):
         target_classes[idx] = target_classes_o
 
         loss_ce = F.cross_entropy(
-            src_logits.transpose(1, 2),
-            target_classes,
+            src_logits.transpose(1, 2), # (B, 100, general.num_targets)
+            target_classes, # (B, 100
             self.empty_weight,
-            ignore_index=253,
+            ignore_index=self.ignore_index, # [TODO-rui] this looks very specious (hardcoded?)
         )
+        # print('[DEBUG-rui]')
         losses = {"loss_ce": loss_ce}
         return losses
 

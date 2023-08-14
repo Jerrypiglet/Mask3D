@@ -342,6 +342,20 @@ def voxelize(
 
         target = []
         target_full = []
+        # import ipdb; ipdb.set_trace()
+        
+        # print('+++++', 
+        #     ignore_label,
+        #     voxel_size,
+        #     probing,
+        #     mode,
+        #     task,
+        #     ignore_class_threshold,
+        #     filter_out_classes,
+        #     label_offset,
+        #     num_queries,
+        #     len(list_labels[0].shape), 
+        # ) # scannet: +++++ 255 0.03 False validation instance_segmentation 100 [0, 1] 2 100 2
 
         if len(list_labels[0].shape) == 1:
             for batch_id in range(len(list_labels)):
@@ -380,6 +394,7 @@ def voxelize(
                 )
                 for i in range(len(target)):
                     target[i]["point2segment"] = input_dict["labels"][i][:, 2]
+                # print('[DEBUG-rui]', "train" not in mode, len(target), [_['labels'] for _ in target])
                 if "train" not in mode:
                     target_full = get_instance_masks(
                         [torch.from_numpy(l) for l in original_labels],
@@ -455,10 +470,12 @@ def get_instance_masks(
                 list_labels[batch_id][:, 1] == instance_id
             ]
             label_id = tmp[0, 0]
-
+            # print('----', filter_out_classes)
+            
             if (
                 label_id in filter_out_classes
             ):  # floor, wall, undefined==255 is not included
+                # print('---->', label_id)
                 continue
 
             if (

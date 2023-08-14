@@ -81,6 +81,7 @@ class HungarianMatcher(nn.Module):
         cost_mask: float = 1,
         cost_dice: float = 1,
         num_points: int = 0,
+        ignore_index: int=255, 
     ):
         """Creates the matcher
 
@@ -93,6 +94,7 @@ class HungarianMatcher(nn.Module):
         self.cost_class = cost_class
         self.cost_mask = cost_mask
         self.cost_dice = cost_dice
+        self.ignore_index = ignore_index
 
         assert (
             cost_class != 0 or cost_mask != 0 or cost_dice != 0
@@ -118,8 +120,12 @@ class HungarianMatcher(nn.Module):
             # Compute the classification cost. Contrary to the loss, we don't use the NLL,
             # but approximate it in 1 - proba[target class].
             # The 1 is a constant that doesn't change the matching, it can be ommitted.
-            filter_ignore = tgt_ids == 253
+            filter_ignore = tgt_ids == self.ignore_index # [TODO-rui] this looks very specious (hardcoded?)
             tgt_ids[filter_ignore] = 0
+            
+            # print('[DEBUG-rui]', out_prob.shape, tgt_ids, torch.max(tgt_ids)) # (100, general.num_targets)
+            assert torch.max(tgt_ids) < out_prob.shape[1], 'tgt_ids should be less than num_classes; after setting tgt_ids[filter_ignore] = 0; filter_ignore=%d'%filter_ignore
+            
             cost_class = -out_prob[:, tgt_ids]
             cost_class[
                 :, filter_ignore

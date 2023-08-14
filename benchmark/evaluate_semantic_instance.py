@@ -56,7 +56,6 @@ import benchmark.util_3d as util_3d
 # if opt.output_file == '':
 #    opt.output_file = os.path.join(os.getcwd(), 'semantic_instance_evaluation.txt')
 
-
 # ---------- Label info ---------- #
 CLASS_LABELS = [
     "cabinet",
@@ -466,6 +465,19 @@ def evaluate(
     global ID_TO_LABEL
     global LABEL_TO_ID
     global opt
+    
+    if dataset == 'openrooms_public':
+        VALID_CLASS_IDS = np.array(
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+        )
+        from datasets.openrooms_public_constants import CLASS_LABELS_OR
+        CLASS_LABELS = CLASS_LABELS_OR
+        
+        ID_TO_LABEL = {}
+        LABEL_TO_ID = {}
+        for i in range(len(VALID_CLASS_IDS)):
+            LABEL_TO_ID[CLASS_LABELS[i]] = VALID_CLASS_IDS[i]
+            ID_TO_LABEL[VALID_CLASS_IDS[i]] = CLASS_LABELS[i]
 
     if dataset == "stpls3d":
         # global CLASS_LABELS
@@ -475,7 +487,7 @@ def evaluate(
 
         opt["min_region_sizes"] = np.array([10])
 
-        CLASS_LABELS = [
+        CLASS_LABELS = [ # [TODO-rui] clean this up
             "Build",
             "LowVeg",
             "MediumVeg",
@@ -959,9 +971,11 @@ def evaluate(
 
     print("evaluating", len(preds), "scans...")
     matches = {}
+    # import ipdb; ipdb.set_trace()
     for i, (k, v) in enumerate(preds.items()):
         gt_file = os.path.join(gt_path, k + ".txt")
         if not os.path.isfile(gt_file):
+            print('Expected GT file', gt_file)
             util.print_error(
                 "Scan {} does not match any gt file".format(k), user_fault=True
             )
@@ -1091,7 +1105,6 @@ def evaluate(
         matches[matches_key]["pred"] = pred2gt
         sys.stdout.write("\rscans processed: {}".format(i + 1))
         sys.stdout.flush()
-    print("")
     ap_scores = evaluate_matches(matches)
     avgs = compute_averages(ap_scores)
 

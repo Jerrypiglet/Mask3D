@@ -4,3 +4,4 @@ cost_class: 2.
 cost_mask: 5.
 cost_dice: 2.
 num_points: -1
+ignore_index: ${data.ignore_label}
