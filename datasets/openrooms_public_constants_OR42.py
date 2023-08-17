@@ -1,5 +1,5 @@
 ### ScanNet Benchmark constants ###
-VALID_CLASS_IDS_OR = (
+VALID_CLASS_IDS_OR42 = (
     0, 
     1, 
     2, 
@@ -44,7 +44,7 @@ VALID_CLASS_IDS_OR = (
     # 41, 
 )
 
-CLASS_LABELS_OR = (
+CLASS_LABELS_OR42 = (
     'curtain', 
     'bike', 
     'washing_machine', 
@@ -90,7 +90,7 @@ CLASS_LABELS_OR = (
     # 'unlabelled', 
 )
 
-CLASS_COLOR_MAP_OR = {
+CLASS_COLOR_MAP_OR42 = {
     0: (174, 199, 232), 
     1: (152, 223, 138), 
     2: (31, 119, 180), 

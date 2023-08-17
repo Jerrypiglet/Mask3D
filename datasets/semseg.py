@@ -24,8 +24,11 @@ from datasets.scannet200.scannet200_constants import (
     SCANNET_COLOR_MAP_200,
     SCANNET_COLOR_MAP_20,
 )
-from datasets.openrooms_public_constants import (
-    CLASS_COLOR_MAP_OR,
+from datasets.openrooms_public_constants_OR42 import (
+    CLASS_COLOR_MAP_OR42,
+)
+from datasets.openrooms_public_constants_OR45 import (
+    CLASS_COLOR_MAP_OR45,
 )
 
 logger = logging.getLogger(__name__)
@@ -95,9 +98,12 @@ class SemanticSegmentationDataset(Dataset):
         if self.dataset_name == "scannet":
             self.color_map = SCANNET_COLOR_MAP_20
             self.color_map[255] = (255, 255, 255)
-        elif "openrooms_public" in self.dataset_name:
-            self.color_map = CLASS_COLOR_MAP_OR
-            self.color_map[255] = (255, 255, 255)  # [TODO-rui] change this according to ignore_id
+        elif "openrooms_public_OR42" in self.dataset_name:
+            self.color_map = CLASS_COLOR_MAP_OR42
+            self.color_map[ignore_label] = (255, 255, 255)
+        elif "openrooms_public_OR45" in self.dataset_name:
+            self.color_map = CLASS_COLOR_MAP_OR45
+            self.color_map[ignore_label] = (255, 255, 255)
         elif self.dataset_name == "stpls3d":
             self.color_map = {
                 0: [0, 255, 0],  # Ground
