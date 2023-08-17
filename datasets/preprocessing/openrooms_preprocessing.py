@@ -11,6 +11,26 @@ from utils.utils_openrooms import get_im_info_list, openrooms_semantics_black_li
 
 from datasets.preprocessing.base_preprocessing import BasePreprocessing
 from utils.point_cloud_utils import load_ply
+from termcolor import colored
+
+def yellow(text):
+    coloredd = colored(text, 'blue', 'on_yellow')
+    return coloredd
+
+def read_exclude_scenes_list(dump_root: Path, split: str, scene_list: list=[]):
+    exclude_scene_list_files = list(dump_root.glob('excluded_scenes_%s*.txt'%split))
+    exclude_scene_list = []
+    for exclude_scene_list_file_ in exclude_scene_list_files:
+        with open(str(exclude_scene_list_file_), 'r') as f:
+            lines = f.readlines()
+        exclude_scene_list += [tuple(line.strip().split()) for line in lines]
+    print(yellow('Excluded scenes:'), len(exclude_scene_list), exclude_scene_list[:5])
+    
+    if scene_list != []:
+        scene_list = [scene for scene in scene_list if scene not in exclude_scene_list]        
+        print(yellow('The rest of the scenes:'), len(scene_list))
+        
+    return exclude_scene_list, scene_list
 
 class OpenroomPublicPreprocessing(BasePreprocessing):
     def __init__(
@@ -29,7 +49,7 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
         rui_indoorinv_data_repo_path = Path(rui_indoorinv_data_repo_path)
         self.create_label_database(rui_indoorinv_data_repo_path)
         
-        self.save_dir = save_dir
+        self.save_dir = Path(save_dir)
         
         for mode in self.modes:
             
@@ -40,13 +60,16 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
             scene_list = [scene for scene in scene_list if (scene[0].replace('DiffMat', '').replace('DiffLight', ''), scene[1]) not in openrooms_semantics_black_list]
             print('[%s] after removing known invalid scenes from [openrooms_semantics_black_list]-> %d scenes'%(split, len(scene_list)))
 
-            excluded_scenes_file = Path(data_dir) / ('excluded_scenes_%s.txt'%split)
-            if excluded_scenes_file.exists():
-                with open(str(excluded_scenes_file), 'r') as f:
-                    excluded_scenes = f.read().splitlines()
-                excluded_scenes = [(scene.split(' ')[0].replace('DiffMat', '').replace('DiffLight', ''), scene.split(' ')[1]) for scene in excluded_scenes]
-                scene_list = [scene for scene in scene_list if (scene[0].replace('DiffMat', '').replace('DiffLight', ''), scene[1]) not in excluded_scenes]
-                print('[%s] after removing known invalid scenes [from %s] -> %d scenes'%(split, excluded_scenes_file.name, len(scene_list)))
+            # excluded_scenes_file = Path(data_dir) / ('excluded_scenes_%s.txt'%split)
+            # if excluded_scenes_file.exists():
+            #     with open(str(excluded_scenes_file), 'r') as f:
+            #         excluded_scenes = f.read().splitlines()
+            #     excluded_scenes = [(scene.split(' ')[0].replace('DiffMat', '').replace('DiffLight', ''), scene.split(' ')[1]) for scene in excluded_scenes]
+            #     scene_list = [scene for scene in scene_list if (scene[0].replace('DiffMat', '').replace('DiffLight', ''), scene[1]) not in excluded_scenes]
+            #     print('[%s] after removing known invalid scenes [from %s] -> %d scenes'%(split, excluded_scenes_file.name, len(scene_list)))
+            
+            _, scene_list = read_exclude_scenes_list(Path(data_dir), split, scene_list)
+
             
             # scene_list_dict[split] = scene_list
 
