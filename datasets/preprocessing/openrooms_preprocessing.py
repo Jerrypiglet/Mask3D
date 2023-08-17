@@ -85,34 +85,44 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
 
     def create_label_database(self, rui_indoorinv_data_repo_path):
         '''
-        0: unlabelled
-        1...42: curtain...ceiling
+        for fused 2D semseg labels: 
+            1: unlabelled
+            0...44: curtain...ceiling
         '''
         
         semantic_labels_root = rui_indoorinv_data_repo_path / 'files_openrooms'
         
-        OR_mapping_obj_cat_str_to_id_file = semantic_labels_root / 'semanticLabelName_OR42.txt'
-        with open(str(OR_mapping_obj_cat_str_to_id_file)) as f:
-            mylist = f.read().splitlines()
-        OR_mapping_obj_cat_str_to_id42_name_dict = {x.split(' ')[0]: (int(x.split(' ')[1]), x.split(' ')[2]) for x in mylist} # cat id is 0-based (0 being unlabelled)!
-        OR_mapping_obj_cat_str_to_id42_name_dict = {k: (v[0]-1, v[1]) for k, v in OR_mapping_obj_cat_str_to_id42_name_dict.items()}
+        # OR_mapping_obj_cat_str_to_id_file = semantic_labels_root / 'semanticLabelName_OR42.txt'
+        # with open(str(OR_mapping_obj_cat_str_to_id_file)) as f:
+        #     mylist = f.read().splitlines()
+        # OR_mapping_obj_cat_str_to_id42_name_dict = {x.split(' ')[0]: (int(x.split(' ')[1]), x.split(' ')[2]) for x in mylist} # cat id is 0-based (0 being unlabelled)!
+        # OR_mapping_obj_cat_str_to_id42_name_dict = {k: (v[0]-1, v[1]) for k, v in OR_mapping_obj_cat_str_to_id42_name_dict.items()}
         
-        OR_mapping_id42_to_name_dict = {v[0]: v[1] for k, v in OR_mapping_obj_cat_str_to_id42_name_dict.items()}
-        OR_mapping_id42_to_name_dict[255] = 'unlabelled'
+        # OR_mapping_id42_to_name_dict = {v[0]: v[1] for k, v in OR_mapping_obj_cat_str_to_id42_name_dict.items()}
+        # OR_mapping_id42_to_name_dict[255] = 'unlabelled'
+
+        OR_names45_file = semantic_labels_root / 'colors/openrooms_names.txt'
+        with open(str(OR_names45_file)) as f:
+            mylist = f.read().splitlines()
+        OR_mapping_id45_to_name_dict = {_: '_'.join(x.split('_')[:-1]) for _, x in enumerate(mylist)} # cat id is 0-based (255 being unlabelled)!
+        OR_mapping_id45_to_name_dict = {k-1: v for k, v in OR_mapping_id45_to_name_dict.items() if k != 0}
+        OR_mapping_id45_to_name_dict[255] = 'unlabelled'      
+
         
         OR_mapping_id45_to_color_file = semantic_labels_root / 'colors/OR4X_mapping_catInt_to_RGB_light.pkl'
         with (open(OR_mapping_id45_to_color_file, "rb")) as f:
             OR4X_mapping_catInt_to_RGB_light = pickle.load(f)
-        OR_mapping_id42_to_color_dict = OR4X_mapping_catInt_to_RGB_light['OR42']
-        OR_mapping_id42_to_color_dict = {k-1: v for k, v in OR_mapping_id42_to_color_dict.items() if k != 0}
-        OR_mapping_id42_to_color_dict[255] = (255, 255, 255) # unlabelled
+        OR_mapping_id45_to_color_dict = OR4X_mapping_catInt_to_RGB_light['OR45']
+        OR_mapping_id45_to_color_dict = {k-1: v for k, v in OR_mapping_id45_to_color_dict.items() if k != 0}
+        OR_mapping_id45_to_color_dict[255] = (255, 255, 255) # unlabelled
         
         label_database = {}
-        for class_id in OR_mapping_id42_to_color_dict.keys():
+        for class_id in OR_mapping_id45_to_color_dict.keys():
             label_database[class_id] = {
-                "color": OR_mapping_id42_to_color_dict[class_id],
-                "name": OR_mapping_id42_to_name_dict[class_id],
-                "validation": class_id not in [40, 41, 42, 255], # 40: wall, 41: floor, 42: ceiling
+                "color": OR_mapping_id45_to_color_dict[class_id],
+                "name": OR_mapping_id45_to_name_dict[class_id],
+                # "validation": class_id not in [40, 41, 42, 255], # 40: wall, 41: floor, 42: ceiling
+                "validation": class_id not in [42, 43, 44, 255], # 42: wall, 43: floor, 44: ceiling
             }
             
         self._save_yaml(
@@ -182,6 +192,9 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
             assert semseg_filepath.exists(), semseg_filepath
             semseg = np.load(semseg_filepath).astype(np.int64)
             assert len(semseg) == len(coords), "semseg doesn't fit"
+            # assert np.amax(semseg[semseg!=255]) < 42 # 0, 1, ..., 41
+            if not np.amax(semseg[semseg!=255]) < 45:
+                print(np.unique(semseg))
             # semseg += 1
             # semseg[semseg == 256] = 0 # unlabelled
             
