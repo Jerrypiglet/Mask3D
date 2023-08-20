@@ -85,8 +85,8 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
 
     def create_label_database(self, rui_indoorinv_data_repo_path):
         '''
-        for fused 2D semseg labels: 
-            1: unlabelled
+        for fused 2D semseg labels: OR45
+            255: unlabelled
             0...44: curtain...ceiling
         '''
         
@@ -107,7 +107,6 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
         OR_mapping_id45_to_name_dict = {_: '_'.join(x.split('_')[:-1]) for _, x in enumerate(mylist)} # cat id is 0-based (255 being unlabelled)!
         OR_mapping_id45_to_name_dict = {k-1: v for k, v in OR_mapping_id45_to_name_dict.items() if k != 0}
         OR_mapping_id45_to_name_dict[255] = 'unlabelled'      
-
         
         OR_mapping_id45_to_color_file = semantic_labels_root / 'colors/OR4X_mapping_catInt_to_RGB_light.pkl'
         with (open(OR_mapping_id45_to_color_file, "rb")) as f:

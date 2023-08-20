@@ -161,7 +161,7 @@ class SetCriterion(nn.Module):
         )
         target_classes[idx] = target_classes_o
 
-        assert torch.max(target_classes!=255) <= 38 # [TODO-rui] for debugging; remove later
+        assert torch.max(target_classes!=255) < 42 # [TODO-rui] for debugging OR45  ; remove later
         
         loss_ce = F.cross_entropy(
             src_logits.transpose(1, 2), # (B, 100, general.num_targets (including ignored class))
@@ -169,7 +169,7 @@ class SetCriterion(nn.Module):
             self.empty_weight,
             ignore_index=self.ignore_index, # [TODO-rui] this looks very specious (hardcoded?)
         )
-        # print('[DEBUG-rui]')
+        # print('[DEBUG-rui]', )
         losses = {"loss_ce": loss_ce}
         return losses
 
@@ -292,7 +292,18 @@ class SetCriterion(nn.Module):
 
         # Retrieve the matching between the outputs of the last layer and the targets
         indices = self.matcher(outputs_without_aux, targets, mask_type)
-
+        '''
+        [Rui-debug]
+            ipdb> targets[0].keys()
+            dict_keys(['labels', 'masks', 'segment_mask', 'point2segment'])
+            ipdb> targets[0]['labels']
+            tensor([ 12,  24,  24,  24,  24,  35,  35,  35,  12,  40, 255, 255], device='cuda:0')
+            ipdb> torch.sum(targets[0]['masks'][-1])
+            tensor(11775, device='cuda:0')
+            ipdb> torch.sum(targets[0]['masks'][-2])
+            tensor(11242, device='cuda:0')
+        '''
+        
         # Compute the average number of target boxes accross all nodes, for normalization purposes
         num_masks = sum(len(t["labels"]) for t in targets)
         num_masks = torch.as_tensor(

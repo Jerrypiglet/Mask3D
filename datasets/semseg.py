@@ -433,7 +433,6 @@ class SemanticSegmentationDataset(Dataset):
             points[:, 9],
             points[:, 10:12],
         )
-
         raw_coordinates = coordinates.copy()
         raw_color = color
         raw_normals = normals
@@ -630,6 +629,7 @@ class SemanticSegmentationDataset(Dataset):
 
         # prepare labels and map from 0 to 20(40)
         labels = labels.astype(np.int32)
+        # print('++++', np.unique(labels[:, 0]), np.unique(self._remap_from_zero(labels[:, 0])), labels.shape) # ++++ [  0  20  24  30  31  40  41  42  43  44 255] [  0  20  24  30  31  40  41 255] (91799, 2)
         if labels.size > 0:
             labels[:, 0] = self._remap_from_zero(labels[:, 0])
             if not self.add_instance:

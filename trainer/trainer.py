@@ -204,21 +204,21 @@ class InstanceSegmentation(pl.LightningModule):
             [item for item in [v for k, v in logs.items() if "loss_dice" in k]]
         )
 
-        self.log_dict(logs)
+        self.log_dict(logs, on_epoch=False)
         results = sum(losses.values())
         
-        self.train_output_list.append(results.detach().cpu().item())
+        self.train_output_list.append(results.item())
         
         return results
 
     def validation_step(self, batch, batch_idx):
-        results = self.eval_step(batch, batch_idx)
+        results = self.eval_step(batch, batch_idx) # dict of losses
         self.val_output_list.append(results)
         
         return results
 
-    def training_epoch_start(self) -> None:
-        super().training_epoch_start()
+    def on_train_epoch_start(self) -> None:
+        super().on_train_epoch_start()
         self.train_output_list = []
         return
 
@@ -227,7 +227,7 @@ class InstanceSegmentation(pl.LightningModule):
         self.val_output_list = []
         return
     
-    def on_training_epoch_end(self):
+    def on_train_epoch_end(self):
         '''
         NotImplementedError: Support for `training_epoch_end` has been removed in v2.0.0.:
             https://github.com/Lightning-AI/lightning/pull/16520
@@ -239,7 +239,8 @@ class InstanceSegmentation(pl.LightningModule):
             self.train_output_list
         )
         results = {"train_loss_mean": train_loss}
-        self.log_dict(results)
+        self.log_dict(results, on_epoch=False)
+        self.train_output_list.clear()
 
     def on_validation_epoch_end(self):
         self.test_epoch_end(self.val_output_list)
@@ -251,7 +252,7 @@ class InstanceSegmentation(pl.LightningModule):
     #         outputs
     #     )
     #     results = {"train_loss_mean": train_loss}
-    #     self.log_dict(results)
+    #     self.log_dict(results, on_epoch=False)
 
     # def validation_epoch_end(self, outputs):
     #     self.test_epoch_end(outputs)
@@ -320,9 +321,10 @@ class InstanceSegmentation(pl.LightningModule):
                 zip(target_full["labels"], target_full["masks"])
             ):
                 # print(instance_counter, label, mask.shape)
-                if label in [40, 41, 42]:
+                if label in [42, 43, 44]:
+                    # [Rui-debug] which is not supposed to happen
                     import ipdb; ipdb.set_trace()
-                if label == 255:  # [TODO-rui] okay fix this...
+                if label == self.ignore_label: 
                     continue
 
                 mask_tmp = mask.detach().cpu().numpy()
@@ -1073,8 +1075,8 @@ class InstanceSegmentation(pl.LightningModule):
             "scannet",
             "stpls3d",
             "scannet200",
-            "openrooms_public", 
-            "openrooms_public_trainval"
+            # "openrooms_public", 
+            "openrooms_public_OR45_trainval"
         ]:
             gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/{self.validation_dataset.mode}"
         else:
@@ -1259,7 +1261,7 @@ class InstanceSegmentation(pl.LightningModule):
             ap_results[f"{log_prefix}_mean_ap_50"] = 0.0
             ap_results[f"{log_prefix}_mean_ap_25"] = 0.0
 
-        self.log_dict(ap_results)
+        self.log_dict(ap_results, on_epoch=False)
 
         if not self.config.general.export:
             shutil.rmtree(base_path)
@@ -1297,7 +1299,7 @@ class InstanceSegmentation(pl.LightningModule):
             [item for item in [v for k, v in dd.items() if "loss_dice" in k]]
         )
 
-        self.log_dict(dd)
+        self.log_dict(dd, on_epoch=False)
 
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(

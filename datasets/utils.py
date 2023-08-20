@@ -470,10 +470,12 @@ def get_instance_masks(
                 list_labels[batch_id][:, 1] == instance_id
             ]
             label_id = tmp[0, 0]
+            # print('+++', label_id)
+            # assert label_id.item() not in filter_out_classes
             # print('----', filter_out_classes)
             
             if (
-                label_id in filter_out_classes
+                label_id.item() in filter_out_classes
             ):  # floor, wall, undefined==255 is not included
                 # print('---->', label_id)
                 continue
@@ -506,7 +508,9 @@ def get_instance_masks(
         masks = torch.stack(masks)
         if list_segments:
             segment_masks = torch.stack(segment_masks)
-
+        
+        # print('[Rui-debug] get_instance_masks', task, label_ids) # ++++ instance_segmentation tensor([  4,  17,  20,  27,  30,   0,  40, 255, 255])
+        
         if task == "semantic_segmentation":
             new_label_ids = []
             new_masks = []

@@ -467,11 +467,20 @@ def evaluate(
     global opt
     
     if 'openrooms_public' in dataset:
-        VALID_CLASS_IDS = np.array(
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
-        )
-        from datasets.openrooms_public_constants import CLASS_LABELS_OR
-        CLASS_LABELS = CLASS_LABELS_OR
+        if 'openrooms_public_OR42' in dataset:
+            VALID_CLASS_IDS = np.array(
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
+            )
+            from datasets.openrooms_public_constants_OR42 import CLASS_LABELS_OR42
+            CLASS_LABELS = CLASS_LABELS_OR42
+        elif 'openrooms_public_OR45' in dataset:
+            VALID_CLASS_IDS = np.array(
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41]
+            )
+            from datasets.openrooms_public_constants_OR45 import CLASS_LABELS_OR45
+            CLASS_LABELS = CLASS_LABELS_OR45
+        else:
+            raise NotImplementedError
         
         ID_TO_LABEL = {}
         LABEL_TO_ID = {}
