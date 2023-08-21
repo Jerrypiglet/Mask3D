@@ -204,7 +204,7 @@ class InstanceSegmentation(pl.LightningModule):
             [item for item in [v for k, v in logs.items() if "loss_dice" in k]]
         )
 
-        self.log_dict(logs, on_epoch=False)
+        self.log_dict(logs)
         results = sum(losses.values())
         
         self.train_output_list.append(results.item())
@@ -239,7 +239,7 @@ class InstanceSegmentation(pl.LightningModule):
             self.train_output_list
         )
         results = {"train_loss_mean": train_loss}
-        self.log_dict(results, on_epoch=False)
+        self.log_dict(results)
         self.train_output_list.clear()
 
     def on_validation_epoch_end(self):
@@ -252,7 +252,7 @@ class InstanceSegmentation(pl.LightningModule):
     #         outputs
     #     )
     #     results = {"train_loss_mean": train_loss}
-    #     self.log_dict(results, on_epoch=False)
+    #     self.log_dict(results)
 
     # def validation_epoch_end(self, outputs):
     #     self.test_epoch_end(outputs)
@@ -1076,8 +1076,8 @@ class InstanceSegmentation(pl.LightningModule):
             "stpls3d",
             "scannet200",
             # "openrooms_public", 
-            "openrooms_public_OR45_trainval"
-            "openrooms_public_matseg_OR42_trainval"
+            "openrooms_public_OR45_trainval", 
+            "openrooms_public_matseg_OR42_trainval", 
         ]:
             gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/{self.validation_dataset.mode}"
         else:
@@ -1262,7 +1262,7 @@ class InstanceSegmentation(pl.LightningModule):
             ap_results[f"{log_prefix}_mean_ap_50"] = 0.0
             ap_results[f"{log_prefix}_mean_ap_25"] = 0.0
 
-        self.log_dict(ap_results, on_epoch=False)
+        self.log_dict(ap_results)
 
         if not self.config.general.export:
             shutil.rmtree(base_path)
@@ -1300,7 +1300,7 @@ class InstanceSegmentation(pl.LightningModule):
             [item for item in [v for k, v in dd.items() if "loss_dice" in k]]
         )
 
-        self.log_dict(dd, on_epoch=False)
+        self.log_dict(dd)
 
     def configure_optimizers(self):
         optimizer = hydra.utils.instantiate(
