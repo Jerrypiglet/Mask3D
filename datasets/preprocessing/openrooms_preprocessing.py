@@ -39,6 +39,10 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
         save_dir: str = "./data/processed/openrooms_public_trainval",
         modes: tuple = ("train", "validation"),
         # modes: tuple = ("validation"),
+        OR_version: str = 'OR45',
+        OR_modality: str = 'instance_seg',
+        not_val_labels: list = [255], 
+        # modes: tuple = ("validation"),
         n_jobs: int = -1,
         rui_indoorinv_data_repo_path: str = "/home/ruizhu/Documents/Projects/rui-indoorinv-data",
     ):
@@ -47,7 +51,16 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
         super().__init__(data_dir, save_dir, modes, n_jobs)
 
         rui_indoorinv_data_repo_path = Path(rui_indoorinv_data_repo_path)
+        
+        self.OR_version = OR_version
+        assert self.OR_version in ['OR42', 'OR45']
+        self.OR_modality = OR_modality
+        assert self.OR_modality in ['instance_seg', 'matseg']
+        self.not_val_labels = not_val_labels
+        
         self.create_label_database(rui_indoorinv_data_repo_path)
+        
+        # import ipdb; ipdb.set_trace()
         
         self.save_dir = Path(save_dir)
         
@@ -101,28 +114,58 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
         # OR_mapping_id42_to_name_dict = {v[0]: v[1] for k, v in OR_mapping_obj_cat_str_to_id42_name_dict.items()}
         # OR_mapping_id42_to_name_dict[255] = 'unlabelled'
 
+        '''
+        names
+        '''
         OR_names45_file = semantic_labels_root / 'colors/openrooms_names.txt'
         with open(str(OR_names45_file)) as f:
             mylist = f.read().splitlines()
         OR_mapping_id45_to_name_dict = {_: '_'.join(x.split('_')[:-1]) for _, x in enumerate(mylist)} # cat id is 0-based (255 being unlabelled)!
         OR_mapping_id45_to_name_dict = {k-1: v for k, v in OR_mapping_id45_to_name_dict.items() if k != 0}
-        OR_mapping_id45_to_name_dict[255] = 'unlabelled'      
+        OR_mapping_id45_to_name_dict[255] = 'unlabelled'
         
+        OR_mapping_obj_cat_str_to_id_file = semantic_labels_root / 'semanticLabelName_OR42.txt'
+        with open(str(OR_mapping_obj_cat_str_to_id_file)) as f:
+            mylist = f.read().splitlines()
+        OR_mapping_obj_cat_str_to_id42_name_dict = {x.split(' ')[0]: (int(x.split(' ')[1]), x.split(' ')[2]) for x in mylist} # cat id is 0-based (0 being unlabelled)!
+        OR_mapping_obj_cat_str_to_id42_name_dict = {k: (v[0]-1, v[1]) for k, v in OR_mapping_obj_cat_str_to_id42_name_dict.items()} # {'curtain': (0, 'curtain'), '03790512': (1, 'bike'), ...}
+        
+        OR_mapping_id42_to_name_dict = {v[0]: v[1] for k, v in OR_mapping_obj_cat_str_to_id42_name_dict.items()}
+        OR_mapping_id42_to_name_dict[255] = 'unlabelled'
+
+        
+        '''
+        colors
+        '''
         OR_mapping_id45_to_color_file = semantic_labels_root / 'colors/OR4X_mapping_catInt_to_RGB_light.pkl'
         with (open(OR_mapping_id45_to_color_file, "rb")) as f:
             OR4X_mapping_catInt_to_RGB_light = pickle.load(f)
+            
         OR_mapping_id45_to_color_dict = OR4X_mapping_catInt_to_RGB_light['OR45']
         OR_mapping_id45_to_color_dict = {k-1: v for k, v in OR_mapping_id45_to_color_dict.items() if k != 0}
         OR_mapping_id45_to_color_dict[255] = (255, 255, 255) # unlabelled
         
+        OR_mapping_id42_to_color_dict = OR4X_mapping_catInt_to_RGB_light['OR42']
+        OR_mapping_id42_to_color_dict = {k-1: v for k, v in OR_mapping_id42_to_color_dict.items() if k != 0}
+        OR_mapping_id42_to_color_dict[255] = (255, 255, 255) # unlabelled
+
         label_database = {}
-        for class_id in OR_mapping_id45_to_color_dict.keys():
-            label_database[class_id] = {
-                "color": OR_mapping_id45_to_color_dict[class_id],
-                "name": OR_mapping_id45_to_name_dict[class_id],
-                # "validation": class_id not in [40, 41, 42, 255], # 40: wall, 41: floor, 42: ceiling
-                "validation": class_id not in [42, 43, 44, 255], # 42: wall, 43: floor, 44: ceiling
-            }
+        if self.OR_version == 'OR45':
+            for class_id in OR_mapping_id45_to_color_dict.keys():
+                label_database[class_id] = {
+                    "color": OR_mapping_id45_to_color_dict[class_id],
+                    "name": OR_mapping_id45_to_name_dict[class_id],
+                    # "validation": class_id not in [40, 41, 42, 255], # 40: wall, 41: floor, 42: ceiling
+                    # "validation": class_id not in [42, 43, 44, 255], # 42: wall, 43: floor, 44: ceiling
+                    "validation": class_id not in self.not_val_labels, 
+                }
+        elif self.OR_version == 'OR42':
+            for class_id in OR_mapping_id42_to_color_dict.keys():
+                label_database[class_id] = {
+                    "color": OR_mapping_id42_to_color_dict[class_id],
+                    "name": OR_mapping_id42_to_name_dict[class_id],
+                    "validation": class_id not in self.not_val_labels, 
+                }
             
         self._save_yaml(
             self.save_dir / "label_database.yaml", label_database
@@ -187,7 +230,10 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
             points = np.hstack((points, segment_ids[..., None]))
             
             # reading semseg labels: 255-unlabelled
-            semseg_filepath = filepath.parent / 'semseg.npy'
+            if self.OR_modality == 'instance_seg':
+                semseg_filepath = filepath.parent / 'semseg.npy'
+            elif self.OR_modality == 'matseg':
+                semseg_filepath = filepath.parent / 'matseg_sem.npy'
             assert semseg_filepath.exists(), semseg_filepath
             semseg = np.load(semseg_filepath).astype(np.int64)
             assert len(semseg) == len(coords), "semseg doesn't fit"
@@ -198,7 +244,11 @@ class OpenroomPublicPreprocessing(BasePreprocessing):
             # semseg[semseg == 256] = 0 # unlabelled
             
             # reading instance seg labels: -1-unlabelled
-            instance_seg_filepath = filepath.parent / 'instance_seg.npy'
+            if self.OR_modality == 'instance_seg':
+                instance_seg_filepath = filepath.parent / 'instance_seg.npy'
+            elif self.OR_modality == 'matseg':
+                instance_seg_filepath = filepath.parent / 'matseg.npy'
+                
             assert instance_seg_filepath.exists(), instance_seg_filepath
             instance_seg = np.load(instance_seg_filepath).astype(np.int64)
             assert len(instance_seg) == len(coords), "instance_seg doesn't fit"
