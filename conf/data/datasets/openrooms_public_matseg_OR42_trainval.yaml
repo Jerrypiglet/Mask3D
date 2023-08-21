@@ -1,12 +1,12 @@
 # @package data
 train_dataset:
   _target_: datasets.semseg.SemanticSegmentationDataset
-  dataset_name: "openrooms_public_OR45_trainval"
-  data_dir: data/processed/openrooms_public_v3smaller_trainval
+  dataset_name: "openrooms_public_matseg_OR42_trainval"
+  data_dir: data/processed/openrooms_public_matseg_v3smaller_trainval
   image_augmentations_path: conf/augmentation/albumentations_aug.yaml
   volume_augmentations_path: conf/augmentation/volumentations_aug.yaml
-  label_db_filepath: data/processed/openrooms_public_v3smaller_trainval/label_database.yaml
-  color_mean_std: data/processed/openrooms_public_v3smaller_trainval/color_mean_std.yaml
+  label_db_filepath: data/processed/openrooms_public_matseg_v3smaller_trainval/label_database.yaml
+  color_mean_std: data/processed/openrooms_public_matseg_v3smaller_trainval/color_mean_std.yaml
   data_percent: 1.0
   mode: ${data.train_mode}
   ignore_label: 255
@@ -29,17 +29,17 @@ train_dataset:
   is_tta: false
   crop_min_size: ${data.crop_min_size}
   crop_length: ${data.crop_length}
-  filter_out_classes: [42, 43, 44]
+  filter_out_classes: []
   label_offset: 0
 
 validation_dataset:
   _target_: datasets.semseg.SemanticSegmentationDataset
-  dataset_name: "openrooms_public_OR45_trainval"
-  data_dir: data/processed/openrooms_public_v3smaller_trainval
+  dataset_name: "openrooms_public_matseg_OR42_trainval"
+  data_dir: data/processed/openrooms_public_matseg_v3smaller_trainval
   image_augmentations_path: null
   volume_augmentations_path: null
-  label_db_filepath: data/processed/openrooms_public_v3smaller_trainval/label_database.yaml
-  color_mean_std: data/processed/openrooms_public_v3smaller_trainval/color_mean_std.yaml
+  label_db_filepath: data/processed/openrooms_public_matseg_v3smaller_trainval/label_database.yaml
+  color_mean_std: data/processed/openrooms_public_matseg_v3smaller_trainval/color_mean_std.yaml
   data_percent: 1.0
   mode: ${data.validation_mode}
   ignore_label: 255
@@ -52,17 +52,17 @@ validation_dataset:
   is_tta: false
   crop_min_size: ${data.crop_min_size}
   crop_length: ${data.crop_length}
-  filter_out_classes: [42, 43, 44]
+  filter_out_classes: []
   label_offset: 0
 
 test_dataset:
   _target_: datasets.semseg.SemanticSegmentationDataset
-  dataset_name: "openrooms_public_OR45_trainval"
-  data_dir: data/processed/openrooms_public_v3smaller_trainval
+  dataset_name: "openrooms_public_matseg_OR42_trainval"
+  data_dir: data/processed/openrooms_public_matseg_v3smaller_trainval
   image_augmentations_path: null
   volume_augmentations_path: null
-  label_db_filepath: data/processed/openrooms_public_v3smaller_trainval/label_database.yaml
-  color_mean_std: data/processed/openrooms_public_v3smaller_trainval/color_mean_std.yaml
+  label_db_filepath: data/processed/openrooms_public_matseg_v3smaller_trainval/label_database.yaml
+  color_mean_std: data/processed/openrooms_public_matseg_v3smaller_trainval/color_mean_std.yaml
   data_percent: 1.0
   mode: ${data.test_mode}
   ignore_label: 255
@@ -75,5 +75,5 @@ test_dataset:
   is_tta: false
   crop_min_size: ${data.crop_min_size}
   crop_length: ${data.crop_length}
-  filter_out_classes: [42, 43, 44]
+  filter_out_classes: []
   label_offset: 0

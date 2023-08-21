@@ -1077,10 +1077,11 @@ class InstanceSegmentation(pl.LightningModule):
             "scannet200",
             # "openrooms_public", 
             "openrooms_public_OR45_trainval"
+            "openrooms_public_matseg_OR42_trainval"
         ]:
             gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/{self.validation_dataset.mode}"
         else:
-            gt_data_path = f"{self.validation_dataset.data_dir[0]}/instance_gt/Area_{self.config.general.area}"
+            gt_data_path = f"{self.validation_dataset.data_dir[0]}/irnstance_gt/Area_{self.config.general.area}"
 
         pred_path = f"{base_path}/tmp_output.txt"
 
