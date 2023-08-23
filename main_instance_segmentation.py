@@ -93,6 +93,7 @@ def train(cfg: DictConfig):
         # gpus=cfg.general.gpus,
         accelerator='gpu', devices=np.arange(cfg.general.gpus).tolist(), 
         callbacks=callbacks,
+        profiler="simple", 
         # weights_save_path=str(cfg.general.save_dir),
         **cfg.trainer,
     )

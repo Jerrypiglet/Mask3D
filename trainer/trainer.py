@@ -24,6 +24,7 @@ import MinkowskiEngine as ME
 import numpy as np
 import pytorch_lightning as pl
 import torch
+torch.set_float32_matmul_precision('medium')
 from models.metrics import IoU
 import random
 import colorsys
@@ -957,7 +958,7 @@ class InstanceSegmentation(pl.LightningModule):
                     "pred_classes": all_pred_classes[bid],
                 }
 
-            if self.config.general.save_visualizations:
+            if self.config.general.save_visualizations and idx[bid] <= 20:
                 if "cond_inner" in self.test_dataset.data[idx[bid]]:
                     target_full_res[bid]["masks"] = target_full_res[bid][
                         "masks"
