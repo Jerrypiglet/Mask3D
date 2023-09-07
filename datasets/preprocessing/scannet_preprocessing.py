@@ -21,13 +21,16 @@ class ScannetPreprocessing(BasePreprocessing):
         self,
         data_dir: str = "./data/raw/scannet/scannet",
         save_dir: str = "./data/processed/scannet",
-        modes: tuple = ("train", "validation", "test"),
+        # modes: tuple = ("train", "validation", "test"),
+        # modes: tuple = ("validation", "test"),
+        modes: tuple = ("validation",),
+        # modes: tuple = ("test",),
         n_jobs: int = -1,
         git_repo: str = "./data/raw/scannet/ScanNet",
         scannet200: bool = False,
     ):
         super().__init__(data_dir, save_dir, modes, n_jobs)
-
+        
         assert scannet200 in ['false', 'False', 'true', 'True']
         self.scannet200 = scannet200 in ['true', 'True']
 
@@ -39,8 +42,10 @@ class ScannetPreprocessing(BasePreprocessing):
             )
 
         git_repo = Path(git_repo)
-        self.create_label_database(git_repo)
-
+        self.label_database = self.create_label_database(git_repo)
+        self.valid_class_ids = list(self.label_database.keys())
+        self.valid_class_ids.pop(self.valid_class_ids.index(255))
+        
         for mode in self.modes:
             # if mode in ['train', 'validation']: continue
             trainval_split_dir = git_repo / "Tasks" / "Benchmark"
@@ -65,10 +70,10 @@ class ScannetPreprocessing(BasePreprocessing):
         # self.compute_color_mean_std()
 
     def create_label_database(self, git_repo):
-        '''
-        [TODO] there is a bug... the label names in label_database.yaml are shifted by 1. should be: 0: unlabelled, 1: wall, 2: floor, etc.
-        '''
-        assert False, 'fix the bug above first'
+        # '''
+        # [TODO] there is a bug... the label names in label_database.yaml are shifted by 1. should be: 0: unlabelled, 1: wall, 2: floor, etc.
+        # '''
+        # assert False, 'fix the bug above first'
         
         if self.scannet200:
             label_database = {}
@@ -84,6 +89,7 @@ class ScannetPreprocessing(BasePreprocessing):
             return label_database
         else:
             if (self.save_dir / "label_database.yaml").exists():
+                print("label database existed; not creating a new one. " + str(self.save_dir / "label_database.yaml"))
                 return self._load_yaml(self.save_dir / "label_database.yaml")
             df = pd.read_csv(
                 self.data_dir / "scannetv2-labels.combined.tsv", sep="\t"
@@ -108,8 +114,9 @@ class ScannetPreprocessing(BasePreprocessing):
                 / "classes_SemVoxLabel-nyu40id.txt"
             ) as f:
                 for_validation = f.read().split("\n")
+                
             for category in for_validation:
-                index = int(re.split(" +", category)[0])
+                index = int(re.split(" +", category)[0]) - 1 # for_validation is 1-based while df is 0-based
                 df.loc[index, "validation"] = True
 
             # doing this hack because otherwise I will have to install imageio
@@ -119,10 +126,17 @@ class ScannetPreprocessing(BasePreprocessing):
 
             df["color"] = color_list
 
-            label_database = df.to_dict("index")
+            label_database = df.to_dict("index") # 0-based
+            
+            unlabelled_id = len(df)-1
+            assert label_database[unlabelled_id]['name'] == 'empty'
+            label_database[255] = label_database[unlabelled_id] # set the unlabelled id to 255
+            del label_database[unlabelled_id]
+            
             self._save_yaml(
                 self.save_dir / "label_database.yaml", label_database
             )
+            
             return label_database
 
     def process_file(self, filepath, mode):
@@ -151,7 +165,8 @@ class ScannetPreprocessing(BasePreprocessing):
         filebase["file_len"] = file_len
         points = np.hstack((coords, features))
 
-        if mode in ["train", "validation"]:
+        # if mode in ["train", "validation"]:
+        if mode in ["train", "validation", "test"]:
             # getting scene information
             description_filepath = Path(
                 filepath
@@ -170,6 +185,7 @@ class ScannetPreprocessing(BasePreprocessing):
                 Path(filepath).parent.glob("*[0-9].segs.json")
             )
             instance_db = self._read_json(instance_info_filepath)
+            print('====', instance_info_filepath)
             segments = self._read_json(segment_indexes_filepath)
             segments = np.array(segments["segIndices"])
             filebase["raw_instance_filepath"] = instance_info_filepath
@@ -179,14 +195,16 @@ class ScannetPreprocessing(BasePreprocessing):
             segment_ids = np.unique(segments, return_inverse=True)[1]
             points = np.hstack((points, segment_ids[..., None]))
 
-            # reading labels file
+            # reading semantic labels file
             label_filepath = filepath.parent / filepath.name.replace(
                 ".ply", ".labels.ply"
             )
             filebase["raw_label_filepath"] = label_filepath
             label_coords, label_colors, labels = load_ply_with_normals(
                 label_filepath
-            )
+            ) # labels: semantic segmentation labels
+            assert np.all([_ in self.valid_class_ids for _ in np.unique(labels)])
+            
             if not np.allclose(coords, label_coords):
                 raise ValueError("files doesn't have same coordinates")
 

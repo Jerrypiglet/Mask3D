@@ -6,6 +6,7 @@ third_party/MinkowskiEngine
 third_party/ScanNet
 *.out
 notebooks/_tmp*
+scannet_list.txt
 
 .vscode/
 
