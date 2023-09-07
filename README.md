@@ -58,6 +58,27 @@ We adapt the codebase of [Mix3D](https://github.com/kumuji/mix3d) which provides
 └── saved                             <- folder that stores models and logs
 ```
 
+### [Rui] Dependencies for (liwen) cuda 11.7/Ubuntu 22.04/sm_86
+``` bash
+export TORCH_CUDA_ARCH_LIST="8.6"
+export PATH="/usr/local/cuda-11.7/bin:$PATH"
+export LD_LIBRARY_PATH="/usr/local/cuda-11.7/lib64:$LD_LIBRARY_PATH"
+export CUDA_HOME="/usr/local/cuda-11.7"
+
+pip install pyyaml==5.3.1 pycocotools
+pip3 install pytorch-lightning==1.8
+pip install -r requirements.txt --ignore-installed --no-deps
+
+pip insall torch==1.13.0+cu117 torchvision==0.14.0+cu117 torchaudio==0.13.0 --extra-index-url https://download.pytorch.org/whl/cu117
+pip3 install torch-scatter -f https://data.pyg.org/whl/torch-1.13.0+cu117.html
+
+> MinkowskiEngine
+python setup.py install --force_cuda --blas_include_dirs=${CONDA_PREFIX}/include --blas=openblas
+
+(to use a different compiler, use prefix: export CC=g++-11; export CXX=g++-11; python ...)
+(for issues with blas, see here: https://github.com/NVIDIA/MinkowskiEngine/issues/300#issuecomment-763343048)
+```
+
 ### [Rui] Dependencies for cuda 11.8/Ubuntu 22.04/sm_89 :memo:
 
 The main dependencies of the project are the following:
@@ -91,7 +112,6 @@ pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.1%2Bcu118.html
 pip install pytorch-lightning==2.0.6
 
 pip3 install 'git+https://github.com/facebookresearch/detectron2.git@710e7795d0eeadf9def0e7ef957eea13532e34cf' --no-deps
-
 
 mkdir third_party
 cd third_party

@@ -29,7 +29,11 @@ for split in ['val']:
         ]
     else:
         SCANNET_ROOT = SCANNET_ROOT_ / 'scans_test'
-    
+        file_list = [
+            '.txt', 
+            '_vh_clean_2.ply', 
+        ]
+
     scene_name_list_path = Path(f'/home/ruizhu/Documents/Projects/ScanNet/Tasks/Benchmark/scannetv2_{split}.txt')
     assert scene_name_list_path.exists()
     with open(scene_name_list_path, 'r') as f:

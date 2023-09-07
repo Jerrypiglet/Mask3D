@@ -21,9 +21,9 @@ class ScannetPreprocessing(BasePreprocessing):
         self,
         data_dir: str = "./data/raw/scannet/scannet",
         save_dir: str = "./data/processed/scannet",
-        # modes: tuple = ("train", "validation", "test"),
+        modes: tuple = ("train", "validation", "test"),
         # modes: tuple = ("validation", "test"),
-        modes: tuple = ("validation",),
+        # modes: tuple = ("validation",),
         # modes: tuple = ("test",),
         n_jobs: int = -1,
         git_repo: str = "./data/raw/scannet/ScanNet",
@@ -90,6 +90,7 @@ class ScannetPreprocessing(BasePreprocessing):
         else:
             if (self.save_dir / "label_database.yaml").exists():
                 print("label database existed; not creating a new one. " + str(self.save_dir / "label_database.yaml"))
+                self.unlabelled_id = 40
                 return self._load_yaml(self.save_dir / "label_database.yaml")
             df = pd.read_csv(
                 self.data_dir / "scannetv2-labels.combined.tsv", sep="\t"
@@ -123,15 +124,17 @@ class ScannetPreprocessing(BasePreprocessing):
             with open(git_repo / "BenchmarkScripts" / "util.py") as f:
                 util = f.read()
                 color_list = eval("[" + util.split("return [\n")[1])
+            color_list = color_list[1:] + color_list[:1]
 
             df["color"] = color_list
-
+            
             label_database = df.to_dict("index") # 0-based
             
-            unlabelled_id = len(df)-1
-            assert label_database[unlabelled_id]['name'] == 'empty'
-            label_database[255] = label_database[unlabelled_id] # set the unlabelled id to 255
-            del label_database[unlabelled_id]
+            self.unlabelled_id = len(df)-1
+            assert self.unlabelled_id == 40
+            assert label_database[self.unlabelled_id]['name'] == 'empty'
+            label_database[255] = label_database[self.unlabelled_id] # set the unlabelled id to 255
+            del label_database[self.unlabelled_id]
             
             self._save_yaml(
                 self.save_dir / "label_database.yaml", label_database
@@ -185,7 +188,7 @@ class ScannetPreprocessing(BasePreprocessing):
                 Path(filepath).parent.glob("*[0-9].segs.json")
             )
             instance_db = self._read_json(instance_info_filepath)
-            print('====', instance_info_filepath)
+            # print('====', instance_info_filepath)
             segments = self._read_json(segment_indexes_filepath)
             segments = np.array(segments["segIndices"])
             filebase["raw_instance_filepath"] = instance_info_filepath
@@ -203,7 +206,20 @@ class ScannetPreprocessing(BasePreprocessing):
             label_coords, label_colors, labels = load_ply_with_normals(
                 label_filepath
             ) # labels: semantic segmentation labels
-            assert np.all([_ in self.valid_class_ids for _ in np.unique(labels)])
+            
+            '''
+            process scannet nyu40 labels
+            labels def: https://github.com/ScanNet/ScanNet/blob/affdbfa9ead373c39e36f40a0fa3494a8b7911e9/Tasks/Benchmark/classes_SemVoxLabel-nyu40id.txt#L4
+            colors: https://github.com/ScanNet/ScanNet/blob/3e5726500896748521a6ceb81271b0f5b2c0e7d2/BenchmarkScripts/util.py#L81
+            '''
+
+            labels[labels==0] = 255 # set the unlabelled id to 255
+            labels[labels!=255] = labels[labels!=255] - 1 # change from 1-based nyu40 ids to 0-based as in yaml
+            # labels[labels==self.unlabelled_id] = 255 # set the unlabelled id to 255
+            # print(self.valid_class_ids, np.unique(labels))
+            if not np.all([_ in self.valid_class_ids for _ in np.unique(labels) if _ != 255]):
+                print(self.valid_class_ids, np.unique(labels))
+            assert np.all([_ in self.valid_class_ids for _ in np.unique(labels) if _ != 255])
             
             if not np.allclose(coords, label_coords):
                 raise ValueError("files doesn't have same coordinates")
@@ -295,6 +311,9 @@ class ScannetPreprocessing(BasePreprocessing):
             "std": [float(each) for each in color_std],
         }
         self._save_yaml(self.save_dir / "color_mean_std.yaml", feats_mean_std)
+        
+        print('color_mean_std:', feats_mean_std)
+        print('color_mean_std file saved to:', self.save_dir / "color_mean_std.yaml")
 
     @logger.catch
     def fix_bugs_in_labels(self):

@@ -746,6 +746,7 @@ class SemanticSegmentationDataset(Dataset):
             print(num_labels, number_of_validation_labels, number_of_all_labels)
             msg = f"""not available number labels, select from:
             {number_of_validation_labels}, {number_of_all_labels}"""
+            import ipdb; ipdb.set_trace()
             raise ValueError(msg)
 
     def _remap_from_zero(self, labels):

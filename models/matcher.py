@@ -123,7 +123,6 @@ class HungarianMatcher(nn.Module):
             filter_ignore = tgt_ids == self.ignore_index # [TODO-rui] this looks very specious (hardcoded?)
             tgt_ids[filter_ignore] = 0
             
-            # print('[DEBUG-rui: memory_efficient_forward]', out_prob.shape, tgt_ids, torch.max(tgt_ids), self.ignore_index) # (100, general.num_targets)
             assert torch.max(tgt_ids) < out_prob.shape[1], 'tgt_ids should be less than num_classes; after setting tgt_ids[filter_ignore] = 0; filter_ignore=%d'%self.ignore_index
             
             cost_class = -out_prob[:, tgt_ids]

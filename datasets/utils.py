@@ -391,6 +391,7 @@ def voxelize(
                     ignore_class_threshold=ignore_class_threshold,
                     filter_out_classes=filter_out_classes,
                     label_offset=label_offset,
+                    ignore_label=ignore_label, 
                 )
                 for i in range(len(target)):
                     target[i]["point2segment"] = input_dict["labels"][i][:, 2]
@@ -402,6 +403,7 @@ def voxelize(
                         ignore_class_threshold=ignore_class_threshold,
                         filter_out_classes=filter_out_classes,
                         label_offset=label_offset,
+                        ignore_label=ignore_label, 
                     )
                     for i in range(len(target_full)):
                         target_full[i]["point2segment"] = torch.from_numpy(
@@ -451,6 +453,7 @@ def get_instance_masks(
     ignore_class_threshold=100,
     filter_out_classes=[],
     label_offset=0,
+    ignore_label=255, 
 ):
     target = []
 
@@ -542,18 +545,20 @@ def get_instance_masks(
             else:
                 target.append({"labels": label_ids, "masks": masks})
         else:
-            l = torch.clamp(label_ids - label_offset, min=0)
+            # l = torch.clamp(label_ids - label_offset, min=0)
+            label_ids[label_ids!=ignore_label] = label_ids[label_ids!=ignore_label] - label_offset
+            assert label_ids[label_ids!=ignore_label].min() >= 0
 
             if list_segments:
                 target.append(
                     {
-                        "labels": l,
+                        "labels": label_ids,
                         "masks": masks,
                         "segment_mask": segment_masks,
                     }
                 )
             else:
-                target.append({"labels": l, "masks": masks})
+                target.append({"labels": label_ids, "masks": masks})
     return target
 
 

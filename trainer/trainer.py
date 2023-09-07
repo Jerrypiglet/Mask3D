@@ -321,7 +321,7 @@ class InstanceSegmentation(pl.LightningModule):
             for instance_counter, (label, mask) in enumerate(
                 zip(target_full["labels"], target_full["masks"])
             ):
-                # print(instance_counter, label, mask.shape)
+                # print(instance_counter, label, self.validation_dataset.map2color([label])[0], mask.shape, mask.sum())
                 if label in [42, 43, 44]:
                     # [Rui-debug] which is not supposed to happen
                     import ipdb; ipdb.set_trace()
@@ -344,6 +344,8 @@ class InstanceSegmentation(pl.LightningModule):
                 size = mask_coords_max - mask_coords_min
                 mask_coords_middle = mask_coords_min + size / 2
 
+                if label not in self.validation_dataset.color_map:
+                    import ipdb; ipdb.set_trace()
                 gt_boxes.append(
                     {
                         "position": mask_coords_middle,
@@ -449,6 +451,8 @@ class InstanceSegmentation(pl.LightningModule):
                 pred_coords.append(mask_coords)
                 pred_normals.append(mask_normals)
 
+                if label not in self.validation_dataset.color_map:
+                    import ipdb; ipdb.set_trace()
                 pred_sem_color.append(
                     self.validation_dataset.map2color([label]).repeat(
                         mask_coords.shape[0], 1
@@ -871,20 +875,22 @@ class InstanceSegmentation(pl.LightningModule):
                 ] = -1
 
         for bid in range(len(prediction[self.decoder_id]["pred_masks"])):
-            all_pred_classes[
-                bid
-            ] = self.validation_dataset._remap_model_output(
-                all_pred_classes[bid].cpu() + label_offset
+            all_pred_classes_ = all_pred_classes[bid].cpu()
+            all_pred_classes_[all_pred_classes_!=self.ignore_label] = all_pred_classes_[all_pred_classes_!=self.ignore_label] + label_offset
+            
+            all_pred_classes[bid] = self.validation_dataset._remap_model_output(
+                all_pred_classes_
             )
 
             if (
                 self.config.data.test_mode != "test"
                 and len(target_full_res) != 0
             ):
-                target_full_res[bid][
-                    "labels"
-                ] = self.validation_dataset._remap_model_output(
-                    target_full_res[bid]["labels"].cpu() + label_offset
+                target_full_res_labels_ = target_full_res[bid]["labels"].cpu()
+                target_full_res_labels_[target_full_res_labels_!=self.ignore_label] = target_full_res_labels_[target_full_res_labels_!=self.ignore_label] + label_offset
+
+                target_full_res[bid]["labels"] = self.validation_dataset._remap_model_output(
+                    target_full_res_labels_
                 )
 
                 # PREDICTION BOX
@@ -1162,6 +1168,7 @@ class InstanceSegmentation(pl.LightningModule):
                                     )
                                 )
                             else:
+                                import ipdb; ipdb.set_trace()
                                 assert (False, "class not known!")
                     else:
                         ap_results[
