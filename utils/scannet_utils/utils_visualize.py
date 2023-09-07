@@ -56,6 +56,7 @@ def visualize(pred_file, mesh_file, output_file, if_random_colors=True, colors=N
             # colors = _get_colors(int(ids.max())+1)
         else:
             colors = util.create_color_palette()
+        print(_id_list, colors)
     else:
         assert isinstance(colors, dict) or isinstance(colors, list), 'colors must be a dict or a list'
     

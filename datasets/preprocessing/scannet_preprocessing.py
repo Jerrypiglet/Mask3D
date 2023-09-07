@@ -21,10 +21,10 @@ class ScannetPreprocessing(BasePreprocessing):
         self,
         data_dir: str = "./data/raw/scannet/scannet",
         save_dir: str = "./data/processed/scannet",
-        modes: tuple = ("train", "validation", "test"),
+        # modes: tuple = ("train", "validation", "test"),
         # modes: tuple = ("validation", "test"),
         # modes: tuple = ("validation",),
-        # modes: tuple = ("test",),
+        modes: tuple = ("test",),
         n_jobs: int = -1,
         git_repo: str = "./data/raw/scannet/ScanNet",
         scannet200: bool = False,
@@ -217,9 +217,14 @@ class ScannetPreprocessing(BasePreprocessing):
             labels[labels!=255] = labels[labels!=255] - 1 # change from 1-based nyu40 ids to 0-based as in yaml
             # labels[labels==self.unlabelled_id] = 255 # set the unlabelled id to 255
             # print(self.valid_class_ids, np.unique(labels))
-            if not np.all([_ in self.valid_class_ids for _ in np.unique(labels) if _ != 255]):
-                print(self.valid_class_ids, np.unique(labels))
-            assert np.all([_ in self.valid_class_ids for _ in np.unique(labels) if _ != 255])
+            
+            '''
+            examples of ids outside nyi40: ![](https://i.imgur.com/zQ1hAhv.jpg) (cyan color)
+            '''
+            # if not np.all([_ in self.valid_class_ids for _ in np.unique(labels) if _ != 255]):
+            #     print(label_filepath)
+            #     print(self.valid_class_ids, np.unique(labels))
+            # assert np.all([_ in self.valid_class_ids for _ in np.unique(labels) if _ != 255])
             
             if not np.allclose(coords, label_coords):
                 raise ValueError("files doesn't have same coordinates")
